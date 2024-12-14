@@ -1,0 +1,615 @@
+THE OPEN UNIVERSITY OF SRI LANKA
+
+FACULTY OF ENGINEERING
+DEPARTMENT OF ELECTRICAL AND COMPUTER ENGINEERING
+BACHELOR OF SOFTWARE ENGINEERING HONOURS
+
+EEX5563/EEX5564 – COMPUTER ARCHITECTURE AND OPERATING SYSTEMS
+Academic Year – 2023/2024
+
+MINI PROJECT
+
+
+
+
+
+
+
+Name: M.F.F.A.SHIF
+Reg no: 121428606
+S ID: S92068606
+ 
+Table of content
+
+1.	Introduction.
+2.	Requirements, Assumptions and justifications for the assumptions and/or Specifications.
+3.	System Design for the Proposed Solution.
+4.	Implementation.
+5.	Functionality and Features.
+6.	Code Structure and Documentation.
+7.	GitHub Repository.
+8.	Testing Results.
+9.	Conclusion.
+10. Future Enhancements.
+11. References.
+12. Appendix. 
+Introduction
+
+The First Fit memory allocation algorithm is one of the simplest and most commonly used methods for allocating memory in computer systems. It is employed in operating systems to allocate memory space to processes in a way that optimizes resource utilization. The algorithm is primarily used in dynamic memory management, where the operating system must efficiently allocate memory to processes based on their requirements.
+In the First Fit algorithm, memory blocks are allocated in the order they are found. When a process requests memory, the algorithm scans the available memory blocks sequentially, starting from the first block. The first memory block that is large enough to accommodate the process is allocated to that process. Once a block is allocated, it is marked as "in use," and the algorithm moves on to the next process request. If no sufficient block is found, the process request is denied, and the process remains unallocated.
+The primary advantage of the First Fit algorithm lies in its simplicity and speed, as it allocates memory immediately when a suitable block is found. However, it can lead to fragmentation over time, where small, unusable gaps of free memory form between allocated blocks. These gaps might reduce the overall efficiency of memory usage as more processes are loaded into memory.
+This report will explore the First Fit memory allocation algorithm in detail, examining its advantages, limitations, and implementation. We will also discuss its practical application in operating systems and how it compares to other memory allocation strategies like Best Fit and Worst Fit. The goal is to understand how First Fit functions in allocating memory efficiently and the trade-offs involved in its use.
+ 
+Requirements, Assumptions, and Justifications for the First Fit Memory Allocation Algorithm
+1. Requirements:
+To implement the First Fit memory allocation algorithm successfully, the following requirements are essential:
+1.	Memory Blocks:
+o	The system must maintain a set of available memory blocks, each with a defined size. These blocks represent free areas of memory that can be allocated to processes.
+2.	Processes:
+o	A list of processes requesting memory allocation. Each process will specify the amount of memory it needs.
+3.	Allocation Criteria:
+o	A mechanism to allocate memory to processes, ensuring that a process is allocated to the first available memory block that is large enough to accommodate its size.
+4.	Memory Management:
+o	Efficient tracking of allocated and free memory blocks, with the ability to mark a block as allocated or free.
+5.	Error Handling:
+o	The system should handle cases where memory cannot be allocated to a process due to insufficient memory, ensuring that unallocated processes are appropriately reported.
+6.	Performance Considerations:
+o	The algorithm should provide fast memory allocation by scanning the memory blocks from the beginning, and only as much as necessary to find a suitable block.
+7.	Memory Fragmentation:
+o	The system must account for fragmentation as memory blocks are allocated and freed, which may result in small unused gaps between allocated blocks.
+8.	User Interface (optional):
+o	A simple interface to input the number of memory blocks, their sizes, and processes with their memory requirements. The system should provide outputs detailing the allocation process.
+2. Assumptions:
+Several assumptions need to be made while implementing and analyzing the First Fit algorithm:
+1.	Sufficient Memory Size:
+o	Assumption: The system has enough memory blocks to allocate to all the processes, but there may be fragmentation issues as memory is allocated and freed.
+o	Justification: In practice, memory allocation often occurs when memory is scarce. The First Fit algorithm does not consider this, and its performance depends on the existing memory availability.
+2.	Non-overlapping Memory Requests:
+o	Assumption: Memory requests from processes do not overlap; each process asks for a fixed amount of memory.
+o	Justification: The First Fit algorithm assumes that each process is allocated a contiguous block of memory, which simplifies the allocation and makes it easier to manage free and allocated memory blocks.
+3.	Memory Blocks are Static:
+o	Assumption: The sizes of the memory blocks are fixed and do not change after their initial allocation.
+o	Justification: In real systems, memory blocks might be dynamically resized. However, for the sake of simplicity in the First Fit algorithm, fixed memory block sizes are assumed. This avoids the complexities of resizing memory blocks dynamically.
+4.	Processes Have Fixed Memory Requirements:
+o	Assumption: Processes have a fixed amount of memory they request at the time of allocation.
+o	Justification: This assumption aligns with simpler models of process memory allocation, where the memory requirements of processes are predefined and do not change once they are allocated.
+5.	Memory Allocation Failure Handling:
+o	Assumption: If a process cannot be allocated memory, it is either placed in a queue for later allocation or fails with an appropriate message.
+o	Justification: This is a common scenario in operating systems when there is insufficient memory available. Failure handling ensures that processes are either reattempted or properly notified.
+6.	Simple First Fit Approach:
+o	Assumption: The memory allocation follows a straightforward First Fit approach, without optimizations like merging adjacent free blocks or considering more complex strategies like Best Fit or Worst Fit.
+o	Justification: The focus is on simplicity and ease of implementation. While more efficient algorithms might be used in practice, First Fit is chosen here for its minimal computational overhead and ease of understanding.
+7.	Memory Block Sizes are Positive Integers:
+o	Assumption: All memory block sizes and process memory requirements are positive integers.
+o	Justification: Negative or zero sizes would not make sense in the context of memory allocation, as they would imply invalid or undefined memory requests.
+8.	Single-Level Memory Allocation:
+o	Assumption: The system operates in a single-level memory model, meaning memory is not hierarchically divided into different types (e.g., cache, RAM).
+o	Justification: In simpler memory models, all processes are allocated from a single pool of available memory. A more complex system could involve multi-level allocation, but for the purposes of this report, a single-level model is assumed.
+3. Justifications for Assumptions:
+1.	Sufficient Memory and Non-overlapping Requests:
+o	By assuming that there is sufficient memory, we simplify the analysis of memory allocation. In reality, insufficient memory could trigger paging or swapping, but such complexities are beyond the scope of the First Fit algorithm's basic implementation.
+2.	Memory Blocks are Static:
+o	Fixed memory blocks are assumed for simplicity in implementation. Dynamic resizing would complicate memory management, especially when blocks are allocated and deallocated, as fragmentation could cause inefficient use of memory.
+3.	Fixed Memory Requirements:
+o	This assumption simplifies the allocation process by eliminating the need for dynamic resizing of memory requests. This helps us focus on understanding the core logic of memory allocation.
+4.	Failure Handling:
+o	If no block can accommodate a process, it is essential to inform the system or the user. This failure handling ensures the algorithm behaves correctly even when allocation is not possible.
+5.	Single-Level Model:
+o	A single-level memory model allows us to focus purely on the allocation strategy, without introducing the complexities of managing different types of memory (such as virtual memory or caches).
+4. Specifications:
+The specifications for implementing the First Fit algorithm can be outlined as follows:
+1.	Input Specifications:
+o	The number of memory blocks and their respective sizes.
+o	The number of processes and their respective memory requirements.
+2.	Output Specifications:
+o	A report indicating which processes have been successfully allocated memory, and which have failed due to insufficient memory.
+o	A summary of the state of memory blocks (allocated or free).
+3.	Performance:
+o	The algorithm should run efficiently, allocating memory as soon as a suitable block is found. The time complexity of the algorithm is O(n) for each allocation, where n is the number of memory blocks.
+4.	Handling Fragmentation:
+o	Fragmentation is a potential issue, but the First Fit algorithm does not attempt to handle fragmentation explicitly. It allocates the first suitable block and leaves the rest of the blocks fragmented.
+
+System Design for the Proposed Solution
+The First Fit memory allocation algorithm is a straightforward yet effective way to allocate memory blocks to processes in a system. The design of the system involves multiple layers of abstraction to ensure that memory allocation is handled efficiently. Below is an overview of the software architecture, design patterns, data structures, and algorithms used in the proposed solution.
+1. Software Architecture Overview
+The system follows a modular architecture that breaks down the process of memory allocation into discrete components, allowing for easier management and maintenance of the code. The architecture consists of the following key components:
+1. Memory Manager (Allocator):
+   - This is the core of the system. The allocator is responsible for managing the list of available memory blocks and allocating them to processes based on the First Fit algorithm.
+2. Memory Block:
+   - This represents a single block of memory. Each block has a size and a status (allocated or free). The `MemoryBlock` class serves as the primary data structure to represent memory units.
+3. Process:
+   - Processes in the system request memory. Each process has a specific memory requirement. The memory request is passed to the memory manager for allocation. If a process is allocated memory, it is associated with the memory block.
+4. User Interface (CLI or GUI):
+   - A simple interface allows the user to enter the number of memory blocks, their sizes, and the memory requirements for processes. The interface interacts with the Memory Manager to allocate memory.
+The system uses a command-line interface (CLI) for simplicity, where users can enter data and view the allocation process. The architecture can also be extended to a graphical user interface (GUI) for better user interaction in future versions.
+
+2. Design Patterns
+The system utilizes the following design patterns:
+1. Singleton Pattern (optional):
+   - If needed, the system could use the Singleton pattern to ensure that there is only one instance of the Memory Manager in the system. This ensures that memory allocation is managed centrally and avoids issues with conflicting memory assignments.
+2. Factory Pattern (optional):
+   - If the system is expanded to support different types of memory blocks (e.g., virtual memory, physical memory), a Factory pattern can be used to create different types of memory blocks based on the system's needs.
+3. Strategy Pattern (optional):
+   - The algorithm for memory allocation could be abstracted into a Strategy pattern. In the First Fit algorithm, the allocation strategy is simple, but in more complex systems, you could have multiple strategies like Best Fit, Worst Fit, etc. The Strategy pattern would allow switching between these algorithms dynamically.
+3. Data Structures Used
+Several data structures are employed to represent and manage memory allocation and processes:
+1. List (Array or Linked List):
+   - A list (implemented as an array or linked list) is used to maintain memory blocks. This list keeps track of both allocated and free memory blocks.
+2. Queue:
+   - A queue (or list) can be used to store processes that couldn't be allocated memory due to insufficient space. These processes can be revisited later for allocation attempts.
+3. Boolean Flags:
+   - For each memory block, a boolean flag `is_allocated` is used to indicate whether the block is free or allocated.
+4. String (for process identification):
+   - A string is used to store the identification of the process that has been allocated the block (e.g., "Process P1"). This helps in associating memory blocks with processes.
+5. HashMap (optional):
+   - In more advanced versions, a hashmap could be used to store processes and their memory requirements, allowing for faster lookup and allocation.
+
+4. Algorithms Used
+The primary algorithm used in this solution is the First Fit memory allocation algorithm, which operates as follows:
+•	First Fit Algorithm:
+   - The algorithm scans the list of memory blocks from the beginning, looking for the first block that is free and large enough to fit the process's memory request.
+   - Once such a block is found, the process is allocated to that block, and the block is marked as allocated.
+   - If no suitable block is found, the process is added to the list of unallocated processes.
+   - The time complexity of this algorithm is O(n) for each process allocation, where n is the number of memory blocks in the system. This makes it efficient in terms of memory allocation time.
+
+5. Flow of Data and Control
+The system follows a clear flow of control:
+1. Input Phase:
+   - The user provides input regarding the number of memory blocks and their sizes. Similarly, the user specifies the memory requirements for each process.
+2. Memory Allocation Phase:
+   - For each process, the memory manager iterates over the list of available memory blocks, starting from the first block. The algorithm allocates the first available block that fits the process's memory requirements.
+3. Error Handling Phase:
+   - If a process cannot be allocated memory (because no block is large enough or free), it is added to the list of unallocated processes.
+4. Output Phase:
+   - The system provides output detailing the state of each memory block (allocated or free) and any processes that could not be allocated memory.
+
+6. Performance Considerations
+The performance of the First Fit algorithm is acceptable for small to moderate numbers of memory blocks and processes. The algorithm is O(n) for each allocation attempt, where n is the number of memory blocks. However, performance may degrade when memory fragmentation occurs, as small gaps of unused memory may form, which are not suitable for larger processes.
+7. Extensions and Future Improvements
+The current system focuses on the basic implementation of the First Fit algorithm, but it can be extended in the following ways:
+1. Support for Different Allocation Strategies:
+   - Additional memory allocation strategies, such as Best Fit and Worst Fit, can be implemented. A user could choose between these strategies at runtime.
+2. Memory Defragmentation:
+   - The system could incorporate a memory defragmentation module to merge free blocks together and improve the allocation efficiency.
+3. Graphical User Interface (GUI):
+   - A GUI could be developed to provide a more intuitive way for users to visualize memory allocation and interact with the system.
+4. Advanced Fragmentation Handling:
+   - Techniques such as compaction or paging could be added to handle fragmentation better and improve memory utilization.
+ 
+Implementation
+The implementation of the First Fit Memory Allocation system follows a systematic software development process. The goal was to create a simple yet efficient solution that simulates memory allocation using the First Fit algorithm. This section describes the software development process, the programming languages, frameworks, tools, and technologies employed in the project.
+1. Software Development Process
+The software development process for this project followed the Agile methodology, focusing on iterative development, flexibility, and regular feedback. The steps followed in the process are:
+Requirement Analysis:
+The project began with a thorough understanding of the problem, which involved allocating memory blocks to processes using the First Fit algorithm. Key requirements were gathered, including the need for a user-friendly interface and efficient memory management.
+Design and Architecture:
+A clear and modular architecture was designed, consisting of classes for memory blocks and memory allocation management. The First Fit algorithm was chosen for its simplicity and effectiveness.
+Implementation:
+The system was implemented incrementally, with each feature (input handling, memory allocation, output display) being developed and tested separately.
+Testing and Debugging:
+After implementing each feature, thorough testing was carried out to ensure that the system was functioning correctly. Test cases were created for different scenarios, such as allocating processes to memory blocks, handling unallocated processes, and dealing with memory overflow.
+Final Deployment and Documentation:
+After completing the implementation and testing, the system was documented, including code comments and a user manual explaining how to use the program. The final system was deployed on a local machine for demonstration purposes.
+2. Programming Languages
+Python was the primary programming language used for implementing this system. Python was chosen due to its simplicity, readability, and powerful features, which made it ideal for this project. Key reasons for choosing Python include:
+•	Python is easy to use and allows for rapid development.
+•	Its built-in data structures (lists, dictionaries) were well-suited for the tasks at hand.
+•	Python supports object-oriented programming (OOP), making it easy to implement classes for memory blocks and processes.
+3. Frameworks and Libraries
+While the project is relatively simple and doesn’t require complex external frameworks or libraries, Python’s standard libraries were used to handle basic functionality such as input/output, error handling, and data structure management.
+No external frameworks (such as Flask, Django, or others) were used, as the application was designed to be a basic command-line simulation.
+4. Tools and Technologies
+The following tools and technologies were employed during the development of the First Fit Memory Allocation system:
+•	Text Editor/IDE:
+Visual Studio Code (VS Code) was used as the text editor to write the Python code. VS Code is a lightweight and powerful code editor with support for Python, debugging, and extensions that help improve productivity during development.
+•	Python Interpreter:
+The Python 3.x interpreter was used to run the Python code. Python was chosen because of its simplicity and its extensive community support for algorithm implementation and problem-solving.
+•	Version Control:
+Git was used for version control to track changes, manage multiple versions of the code, and collaborate efficiently. The code was stored in a GitHub repository for easy access, sharing, and backup.
+•	Command-Line Interface (CLI):
+The system uses a command-line interface (CLI) for user input and output. The user interacts with the program through text prompts, and the results are displayed on the terminal.
+•	Testing and Debugging:
+The Python built-in unittest library was employed for unit testing different components of the system, ensuring that each part of the program functions as expected.
+Python’s built-in debugger (pdb) was used to debug the code and track down any issues during the development process.
+•	Documentation:
+Markdown was used for writing documentation, including the project’s README file. This allowed for easy-to-read, formatted text files explaining how to set up, run, and use the application.
+Sphinx could also be used for generating more formal project documentation (optional, but useful for larger-scale projects).
+•	Error Handling and Validation:
+Python's try-except blocks were used extensively to handle input validation and prevent the program from crashing due to invalid data entries. For example, the user input is validated to ensure that only positive integers are entered for memory block sizes and process requests.
+5. Development Approach
+1. Class Design and Data Structures: 
+The core of the system is based on object-oriented principles. The program consists of two main classes:
+•	MemoryBlock: Represents a memory block with properties such as size, allocation status, and the process it is allocated to.
+•	FirstFitAllocator: Manages the memory blocks, processes, and implements the First Fit algorithm to allocate memory.
+The system uses basic lists to manage the memory blocks and unallocated processes, making it straightforward to add and remove elements.
+1.	Input Handling:
+The program prompts the user for input regarding the number of memory blocks, their sizes, and the memory requirements for each process. The user inputs are validated to ensure they are positive integers.
+2.	First Fit Algorithm:
+The First Fit algorithm was implemented in the allocate_memory() method of the FirstFitAllocator class. It iterates over the memory blocks and assigns the first available block that fits the process's memory requirement.
+3.	Output Handling:
+The program provides a detailed summary of the memory allocation status at the end of each execution. This includes the allocation status for each memory block and any processes that couldn't be allocated memory.
+6. Key Features
+•	Memory Allocation Simulation: The system allocates memory to processes using the First Fit algorithm.
+•	User Input Validation: Ensures that only valid memory block sizes and process memory requirements are entered by the user.
+•	Detailed Reporting: Outputs the memory block allocation status and a list of processes that could not be allocated memory.
+•	Simple CLI Interface: Users can interact with the system through a command-line interface.
+7. Challenges and Solutions
+•	Handling Invalid Input: One challenge during development was ensuring that the program could handle invalid user input gracefully. This was resolved by using a loop combined with input validation to prompt the user until valid data was entered.
+•	Memory Fragmentation: While the First Fit algorithm does not handle fragmentation, this was not implemented in the initial version. The focus was on the core functionality of memory allocation. Future versions could address fragmentation by implementing techniques such as compaction or defragmentation.
+
+
+Functionality and Features
+The First Fit Memory Allocation System was designed to simulate the First Fit algorithm's functionality for allocating memory to processes in an efficient and user-friendly manner. Below is a detailed overview of the key functionalities and features of the system:
+1. Core Functionalities
+a. Memory Block Management
+•	Definition of Memory Blocks:
+The system allows users to define the total number of memory blocks and their respective sizes.
+Each memory block is represented as an object with properties such as size, allocation status, and allocated process.
+b. Process Allocation
+•	First Fit Allocation:
+The system uses the First Fit algorithm to allocate memory to processes. It searches for the first available memory block that can fit a process's memory request.
+Once a suitable block is found, it is marked as allocated, and the process is assigned to that block.
+•	Unallocated Process Handling:
+If no suitable memory block is found for a process, the system records the process as unallocated and provides an appropriate message.
+c. Input Validation
+•	The system includes robust input validation to ensure that:
+Only positive integers are accepted for memory block sizes, the number of memory blocks, the number of processes, and their memory requests.
+Invalid or non-positive inputs are rejected with a clear error message prompting the user to retry.
+d. Memory Allocation Summary
+•	Allocation Details:
+o	After the allocation process, the system displays a summary of memory allocation, including:
+	Memory blocks that are allocated and their respective processes.
+	Free memory blocks.
+•	Unallocated Processes:
+o	If any processes cannot be allocated memory, they are listed along with their memory requests.
+2. Key Features
+a. User-Friendly Command-Line Interface (CLI)
+o	The program uses a text-based interface that interacts with the user through simple prompts. It is straightforward and requires no prior technical expertise to use.
+b. Detailed Reporting
+o	The system provides detailed and organized output to ensure users clearly understand the memory allocation process, including:
+	A summary of the allocation status for each memory block.
+	A list of processes that were not allocated memory.
+
+c. Dynamic and Modular Design
+•	Scalability:
+	The system can handle any number of memory blocks and processes, making it adaptable to varying scenarios.
+•	Modularity:
+	Each component (memory blocks, allocator, and processes) is encapsulated in a separate class or function, making the code reusable and easy to maintain.
+d. Robust Error Handling
+•	The system ensures that invalid inputs (e.g., negative or non-integer values) are gracefully handled by prompting the user to enter valid values.
+e. Realistic Simulation
+•	The First Fit algorithm is implemented as it would be in real-world memory management scenarios, allowing users to understand how processes are allocated based on available memory.
+f. Flexibility
+•	The system allows users to test different configurations of memory blocks and processes to observe how the First Fit algorithm performs under various scenarios.
+3. Usability Highlights
+•	Interactive Input:
+Users are guided step-by-step to enter the required data, including memory block sizes and process requests.
+•	Clear Output:
+Results are displayed in a clear and easy-to-read format, with a focus on ensuring that users can identify the status of each memory block and process.
+•	Extensible Design:
+While the current version focuses on the First Fit algorithm, the system's modular design allows for future extensions, such as implementing other memory allocation strategies (e.g., Best Fit or Worst Fit).
+4. Enhancements in Future Versions
+•	Memory Compaction:
+Adding support for compacting memory to reduce fragmentation and free up space.
+•	Graphical User Interface (GUI):
+Enhancing user experience by introducing a GUI for visualizing memory blocks and process allocations.
+•	Support for Multiple Algorithms:
+Allowing users to choose between different memory allocation algorithms to compare their performance.
+•	Performance Metrics:
+Including metrics like memory utilization percentage and the number of unallocated processes to provide insights into the system’s performance.
+
+
+
+
+
+
+
+
+
+Code Structure and Documentation 
+1. Code Structure Overview
+1. The program consists of three primary parts:
+•	The InputValidator class:
+o	Handles input validation for memory block sizes and process memory requests.
+o	Ensures that all inputs are positive integers.
+
+•	The FirstFitAllocator class:
+o	Implements the logic for the First Fit Memory Allocation algorithm.
+o	Stores memory blocks and processes, and allocates memory using the First Fit algorithm.
+
+•	The main() function:
+o	The main function where the program runs.
+o	It handles user input, interacts with the FirstFitAllocator, and displays the final allocation state.
+
+
+class InputValidator:
+    """
+    Provides input validation methods to ensure robust user input handling.
+    """
+    @staticmethod
+    def validate_positive_integer(prompt):
+        """
+        Prompts the user for a positive integer and validates the input.
+
+        Args:
+            prompt (str): The message to display to the user.
+
+        Returns:
+            int: A valid positive integer input by the user.
+        """
+        while True:
+            try:
+                value = int(input(prompt))
+                if value <= 0:
+                    raise ValueError("Value must be greater than zero.")
+                return value
+            except ValueError as e:
+                print(f"Invalid input: {e}. Please enter a positive integer.")
+
+•	Purpose: To prompt the user for input and validate that the value is a positive integer.
+•	Methods:
+	validate_positive_integer(prompt):
+o	Continuously prompts the user for input until a valid positive integer is entered.
+o	Raises a ValueError if the input is invalid (either a negative number or a non-integer value).
+FirstFitAllocator Class
+This class manages memory blocks and processes, implementing the First Fit memory allocation algorithm.
+class FirstFitAllocator:
+    """
+    Implements the First Fit memory allocation algorithm with process management.
+    """
+    def __init__(self):
+        self.memory_blocks = []  # List of memory blocks
+        self.processes = []      # List of processes
+
+    def add_memory_blocks(self, block_sizes):
+        """
+        Add memory blocks to the allocator.
+        """
+        for size in block_sizes:
+            self.memory_blocks.append(MemoryBlock(size))
+
+    def add_process(self, process_id, memory_request):
+        """
+        Add a new process with its memory request and automatically allocate memory.
+        """
+        process = Process(process_id, memory_request)
+        self.processes.append(process)
+        allocated = self._allocate_memory_automatically(process)
+        if not allocated:
+            print(f"Process {process_id} (Request: {memory_request}) could not be allocated to any block.")
+
+    def _allocate_memory_automatically(self, process):
+        """
+        Automatically allocate memory to the given process using the First Fit algorithm.
+        """
+        for block in self.memory_blocks:
+            if not block.is_allocated and block.size >= process.memory_request:
+                block.is_allocated = True
+                block.allocated_to = process.process_id
+                print(f"Memory of size {block.size} allocated to Process {process.process_id}.")
+                return True
+        return False  # Memory allocation failed
+
+    def display_state(self):
+        """
+        Display memory blocks, all processes, and unallocated processes at once.
+        """
+        print("\nCurrent Memory Blocks:")
+        for idx, block in enumerate(self.memory_blocks):
+            print(f"Block {idx + 1}: {block}")
+
+        print("\nProcesses:")
+        for process in self.processes:
+            print(process)
+
+        print("\nUnallocated Processes:")
+        unallocated = [p for p in self.processes if all(b.allocated_to != p.process_id for b in self.memory_blocks)]
+        if unallocated:
+            for process in unallocated:
+                print(process)
+        else:
+            print("All processes have been allocated memory.")
+
+
+•	Purpose: Manages memory blocks and processes, allocating memory using the First Fit algorithm.
+•	Attributes:
+	memory_blocks: A list of available memory block sizes.
+	processes: A dictionary mapping process IDs to their allocated memory sizes.
+•	Methods:
+o	add_memory_blocks(block_sizes):
+	Adds the given memory block sizes to the memory block list.
+o	add_process(process_id, memory_request):
+	Allocates memory to a process using the First Fit algorithm.
+	If a process cannot be allocated memory, it stores None as its allocation status.
+•	display_state():
+o	Displays the current state of each memory block and the allocation status of each process.
+
+
+Main Function
+This function handles the user interface, where the user enters the number of memory blocks and processes, and the system allocates memory accordingly.
+def main():
+    """
+    Main function to execute the First Fit Memory Allocator program.
+    Handles memory block and process inputs, and displays the final allocation state.
+    """
+    # Initialize the memory allocator
+    allocator = FirstFitAllocator()
+
+    # Welcome message
+    print("\nWelcome to the First Fit Memory Allocator!!\n")
+
+    # Step 1: Input the number of memory blocks
+    memory_block_limit = InputValidator.validate_positive_integer("Enter the maximum number of memory blocks: ")
+
+    # Step 2: Input sizes of memory blocks
+    block_sizes = []
+    for i in range(memory_block_limit):
+        size = InputValidator.validate_positive_integer(f"Enter size for Memory Block {i + 1}: ")
+        block_sizes.append(size)
+    allocator.add_memory_blocks(block_sizes)
+
+    # Step 3: Input the number of processes
+    print()  # Blank line for better readability
+    process_limit = InputValidator.validate_positive_integer("Enter the maximum number of processes: ")
+
+    # Step 4: Input memory requests for each process and add them to the allocator
+    for i in range(1, process_limit + 1):
+        memory_request = InputValidator.validate_positive_integer(f"Enter memory request for Process P{i}: ")
+        process_id = f"P{i}"  # Auto-generated process ID
+        allocator.add_process(process_id, memory_request)
+
+    # Step 5: Display the final allocation state
+    print("\nFinal State of Memory Allocation:")
+    allocator.display_state()
+
+•	Purpose: Handles the program's user interface, including input collection, memory allocation, and displaying the results.
+•	Steps:
+1.	Prompts the user for the number of memory blocks and their sizes.
+2.	Prompts the user for the number of processes and their memory requests.
+3.	Uses the First Fit algorithm to allocate memory to each process.
+4.	Displays the final state of memory allocation, showing the allocation status of each memory block and process.
+
+3. Example of Program Execution
+When the program is run, the user will interact with it as follows:
+ 
+
+4. Future Enhancements
+1.	Support for Other Allocation Algorithms:
+•	Implement Best Fit, Worst Fit, and Next Fit algorithms and allow users to select the desired allocation strategy.
+2.	GUI Implementation:
+•	A Graphical User Interface (GUI) could be added using a library like Tkinter or PyQt, offering a more user-friendly interface for managing memory allocation.
+3.	Handling Memory Deallocation:
+•	The system could allow memory blocks to be deallocated, freeing up memory for other processes.
+4.	Fragmentation Tracking:
+•	Introduce a feature to track memory fragmentation, both internal and external.
+
+
+GitHub Repository
+Link:
+https://github.com/s92068606/121428606-MP-EEX5563
+ 
+
+
+Testing Results
+	Memory Block Addition: Ensures that memory blocks are correctly added to the allocator.
+	Process Addition: Verifies that processes are added with correct details (e.g., memory request and process ID).
+	Memory Allocation: Confirms that memory is allocated to processes according to the First Fit algorithm.
+	Failure Handling: Checks that the system properly handles situations when there is insufficient memory for a process.
+	State Display: Tests if the current state of the memory allocator is displayed correctly, showing memory blocks and their allocation status.
+
+Test Cases:
+	Test Case: Add Memory Blocks
+ 
+o	Description: This test verifies that memory blocks are added correctly to the allocator.
+o	Expected Outcome: The allocator should contain the same number of blocks as the input and the sizes should match.
+o	Result: Passed — The memory blocks were correctly added.
+
+	Test Case: Add Process
+ 
+o	Description: This test checks if the processes are correctly added with the proper memory request and process ID.
+o	Expected Outcome: The process should have a valid ID and memory request stored in the allocator.
+o	Result: Passed — The process was added with the correct details.
+
+	Test Case: Memory Allocation (Failure)
+ 
+o	Description: This test checks that the system handles cases where memory allocation fails due to insufficient memory.
+o	Expected Outcome: The system should return a failure and not allocate memory when no suitable blocks are available.
+o	Result: Passed — Memory allocation failed as expected when there was not enough available memory.
+
+	Test Case: Memory Allocation (Success)
+ 
+o	Description: This test verifies that the memory is successfully allocated to processes if there is enough memory available.
+o	Expected Outcome: The process should be allocated to the first suitable memory block that can accommodate its request.
+o	Result: Passed — The process was successfully allocated to a memory block.
+
+	Test Case: Display State
+ 
+o	Description: This test ensures that the allocator's state, including memory block allocation status, is correctly displayed.
+o	Expected Outcome: The system should display the memory blocks with their sizes and allocation status.
+o	Result: Passed — The display function worked as expected and showed the correct memory block status.
+
+	Test Case: Invalid Integer Input
+ 
+o	Description: This test case ensures that the program correctly handles invalid integer inputs.
+o	Expected Outcome:
+The system should print an error message when the user inputs invalid data (non-integer, negative, or zero values) and prompt for re-entry.
+The program should continue execution once all valid values are entered.
+o	Result: Passed — The program correctly handled invalid input and prompted the user to enter valid integers until all values were valid, after which the allocation process continued successfully.
+
+Conclusion
+The First Fit Memory Allocator project provides a robust implementation of a memory allocation system using the first-fit algorithm, which efficiently allocates memory to processes based on their memory requirements. By following a clear and structured approach, the program:
+
+Accepts memory block sizes and process memory requests: Users can enter memory blocks and processes, which are handled with error checking to ensure only valid inputs are processed.
+Allocates memory to processes: The first-fit algorithm is implemented to allocate the available memory blocks to processes in the order they arrive, ensuring that the memory allocation is both efficient and straightforward.
+Handles invalid inputs gracefully: The system is equipped with validation checks to handle invalid inputs, ensuring the program does not crash due to erroneous values like negative numbers, zero, or non-numeric inputs.
+Displays final memory allocation: After processing all input data, the program shows the final state of the memory allocation, helping users understand how memory was distributed among processes.
+User-friendly interface: The system provides a text-based interface that prompts the user for necessary inputs and displays helpful messages, including error handling for invalid input values.
+
+
+
+
+
+Future Enhancements
+
+Here are some future enhancements for the First Fit Memory Allocator, focusing on improving functionality, user experience, and scalability:
+1. Enhanced Memory Allocation Strategies
+Best Fit Algorithm: Implement the Best Fit strategy, which allocates the smallest available block that is large enough for the process. This can reduce internal fragmentation.
+Worst Fit Algorithm: Add a Worst Fit strategy to allocate the largest block to processes, ensuring better memory utilization in certain scenarios.
+Dynamic Allocation Switching: Allow users to choose between First Fit, Best Fit, or Worst Fit algorithms dynamically at runtime.
+2. Real-Time Visualization
+Memory Block Visualization: Provide a graphical representation of memory blocks to show which blocks are free or allocated and how memory is being utilized in real-time.
+Process Allocation Tracking: Display a timeline or animation showing the allocation process for better understanding.
+3. Memory Splitting and Coalescing
+Splitting Large Blocks: Introduce the option to split larger blocks into smaller parts to better fit processes, reducing internal fragmentation.
+Block Merging: Implement coalescing of adjacent free blocks into larger blocks when memory is released, improving memory availability.
+4. Advanced Error Handling and Input Validation
+Automatic Data Validation: Implement robust error-checking mechanisms to ensure invalid inputs (e.g., negative sizes, non-integer values) are handled gracefully.
+Custom Warnings: Display warnings for unallocated processes with detailed reasons (e.g., "Insufficient memory" or "Block size mismatch").
+5. Process Prioritization
+Priority-Based Allocation: Introduce a feature where processes with higher priority are allocated memory first, ensuring critical processes get resources.
+Customizable Priorities: Allow users to assign priority levels to processes during input.
+6. Reallocation and Release Mechanisms
+Memory Reallocation: Add the ability to dynamically reallocate memory to processes if a better-suited block becomes available.
+Process Termination: Allow processes to release memory blocks dynamically, making them available for new allocations.
+7. Integration with Real-World Systems
+Simulation of OS Memory Allocation: Extend the application to simulate real-world memory allocation scenarios, such as paging and segmentation.
+Compatibility with External Data: Allow integration with external datasets to simulate process memory requests and allocation in larger systems.
+8. Scalability and Performance
+Support for Large Systems: Optimize the program to handle thousands of memory blocks and processes efficiently.
+Parallel Allocation: Introduce multi-threading to allocate memory for multiple processes simultaneously, improving speed in large-scale systems.
+9. Reporting and Analytics
+Detailed Reports: Generate reports on memory utilization, internal fragmentation, and unallocated processes for analysis.
+Metrics Dashboard: Add a dashboard showing key metrics such as total memory utilization, number of unallocated processes, and fragmentation statistics.
+10. User-Friendly Features
+Interactive User Interface: Replace the CLI with a GUI using libraries like Tkinter, PyQt, or React for better user interaction.
+Configurable Settings: Allow users to set custom parameters like block sizes, allocation strategies, and process priorities through a configuration menu.	
+
+
+References
+https://youtu.be/y8nObAiAofk?si=y3BOBUD-6Ls8d94r
+https://youtu.be/HBQZ5rlaN-s?si=f84KytI0fflgpomu
+Discussion Session Recording
+	https://www.geeksforgeeks.org/program-first-fit-algorithm-memory-management/
+	https://www.geeksforgeeks.org/first-fit-allocation-in-operating-systems/
+	https://www.geeksforgeeks.org/first-fit-allocation-in-operating-systems/
+Appendix
+
+https://drive.google.com/file/d/1GQzawuT4j5Wt3xvZdmYYoz1bZwAq3Zur/view?usp=sharing
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
